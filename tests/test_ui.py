@@ -43,16 +43,18 @@ def test_window_filters_detail_and_metrics(app):
     window.display_batch(batch, "example.json", "UTC")
     window.show()
     app.processEvents()
-    original_metrics = window.metrics_label.text()
+    original_metrics = window.batch_label.text()
     window.currency.setCurrentText("EUR")
     assert window.proxies[0].rowCount() == 1
     window.tables[0].selectRow(0)
     app.processEvents()
     assert "A-77" in window.original.toPlainText()
     assert "source_c" in window.normalized.toPlainText()
-    assert window.metrics_label.text() == original_metrics
+    assert window.batch_label.text() == original_metrics
+    assert "Válidas: 1" in window.metrics_label.text()
+    assert "USD" not in window.metrics_label.text()
     window.tabs.setCurrentIndex(1)
-    assert not window.currency.isEnabled()
+    assert window.currency.isEnabled()
     window.clear_filters()
     window.close()
     window.deleteLater()
@@ -144,7 +146,7 @@ def test_automatic_initial_load_and_categories(app, tmp_path, monkeypatch):
     assert "Incompletas: 100" in window.metrics_label.text()
     assert window.export_incomplete.isEnabled()
     window.tabs.setCurrentIndex(2)
-    assert not window.state.isEnabled() and not window.currency.isEnabled()
+    assert window.state.isEnabled() and window.currency.isEnabled()
     window.tables[2].selectRow(0)
     assert 'INCOMPLETE' in window.normalized.toPlainText()
     assert 'MISSING_FIELD' in window.normalized.toPlainText()
@@ -161,6 +163,47 @@ def test_automatic_initial_load_and_categories(app, tmp_path, monkeypatch):
     exported = json.loads(target.read_text())
     assert len(exported) == 100
     assert all(row['category'] == 'INCOMPLETE' for row in exported)
+    window.close()
+    window.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+
+
+def test_source_currency_counts_all_categories_and_reset(app):
+    window = MainWindow()
+    window.display_batch(load(ROOT / "src/transaction_normalizer/data/transactions_500.json"), "500.json", "UTC")
+    batch_summary = window.batch_label.text()
+    window.source.setCurrentText("source_a")
+    window.currency.setCurrentText("USD")
+    assert [p.rowCount() for p in window.proxies] == [50, 17, 13]
+    assert [window.tabs.tabText(i) for i in range(3)] == ["Válidas (50)", "Inválidas (17)", "Incompletas (13)"]
+    assert "Registros: 80" in window.metrics_label.text()
+    assert "Válidas: 50" in window.metrics_label.text()
+    assert "Inválidas: 17" in window.metrics_label.text()
+    assert "Incompletas: 13" in window.metrics_label.text()
+    assert "EUR" not in window.metrics_label.text()
+    assert window.batch_label.text() == batch_summary
+    window.tabs.setCurrentIndex(2)
+    assert window.currency.isEnabled()
+    assert window.models[2].value(window.proxies[2].mapToSource(window.proxies[2].index(0, 0)).row(), 2) == "USD"
+    window.currency.setCurrentText("Sin moneda")
+    assert [p.rowCount() for p in window.proxies] == [0, 0, 6]
+    window.source.setCurrentText("source_c")
+    assert "USD" not in [window.currency.itemText(i) for i in range(window.currency.count())]
+    window.currency.setCurrentText("EUR")
+    assert [p.rowCount() for p in window.proxies] == [100, 33, 25]
+    window.search.setText("no-existe")
+    assert [p.rowCount() for p in window.proxies] == [0, 0, 0]
+    assert "Registros: 0" in window.metrics_label.text()
+    assert "Sin montos válidos" in window.metrics_label.text()
+    window.clear_filters()
+    assert [p.rowCount() for p in window.proxies] == [300, 100, 100]
+    assert "USD 21,413.00" in window.metrics_label.text()
+    assert "EUR 43,031.50" in window.metrics_label.text()
+    # Elegir una fuente incompatible reinicia la moneda, sin ocultar todos los datos.
+    window.currency.setCurrentText("USD")
+    window.source.setCurrentText("source_c")
+    assert window.currency.currentText() == "Todas las monedas"
+    assert [p.rowCount() for p in window.proxies] == [100, 33, 33]
     window.close()
     window.deleteLater()
     QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)

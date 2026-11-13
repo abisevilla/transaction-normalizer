@@ -99,7 +99,7 @@ Calcular a partir de un único resultado de procesamiento:
 - Conteo por `SUCCESS`, `FAILED` y `PENDING`, exclusivamente sobre transacciones válidas.
 - Totales monetarios por moneda, exclusivamente sobre transacciones válidas, incluyendo todos los estados y etiquetando ese alcance claramente. Si se muestran totales solo de éxitos, presentarlos como una métrica separada.
 
-Mostrar métricas del lote completo y distinguir claramente cualquier resumen de la vista filtrada. No mezclar ambos alcances.
+Mostrar en el resumen principal las métricas de la vista filtrada y actualizar los conteos de las tres categorías, estados y sumas con cada filtro. Conservar un resumen separado del lote completo. No mezclar ambos alcances. Los filtros de fuente, moneda, estado y búsqueda se aplican a las tres categorías; en rechazadas usar solo los campos reconocibles del original sin normalizar el registro como válido. Adaptar las monedas disponibles a la fuente y permitir localizar registros sin moneda reconocible.
 
 ## Interfaz de escritorio
 

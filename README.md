@@ -14,11 +14,19 @@ Siga estos pasos en orden desde una terminal de macOS o Linux:
    cd /Users/main/Documents/transaction-normalizer
    ```
 
-2. **Cree el entorno virtual una sola vez**, usando Python 3.13 instalado en su equipo. Si ya existe `.venv`, continúe al paso 3:
+2. **Compruebe la versión de Python y cree el entorno virtual una sola vez.** Use el comando `python3` disponible en su equipo:
 
    ```bash
-   python3.13 -m venv .venv
+   python3 --version
    ```
+
+   Si muestra una versión entre **3.11 y 3.14**, cree el entorno:
+
+   ```bash
+   python3 -m venv .venv
+   ```
+
+   No es necesario que exista un comando llamado `python3.13`: `python3` puede apuntar a una versión compatible. Si muestra otra versión, utilice la ruta de una instalación compatible para crear el entorno. Si ya tiene `.venv`, continúe al paso 3 y compruebe allí su versión antes de instalar dependencias.
 
 3. **Active el entorno virtual** en cada terminal nueva:
 
@@ -47,6 +55,14 @@ Siga estos pasos en orden desde una terminal de macOS o Linux:
 
 En ejecuciones posteriores basta con entrar al repositorio, activar `.venv` y ejecutar el comando del paso 5. Para terminar, cierre la ventana; puede salir del entorno con `deactivate`.
 
+Si ya instaló el proyecto, puede iniciarlo directamente desde la raíz del repositorio sin activar el entorno:
+
+```bash
+.venv/bin/python -m transaction_normalizer
+```
+
+Dentro del entorno activado se utiliza `python`, que corresponde al intérprete de `.venv`. Si aparece `No module named pip` al instalar dependencias, ejecute `python -m ensurepip --upgrade` y repita el paso 4.
+
 ## Archivo inicial de 500 transacciones
 
 El archivo está en **`src/transaction_normalizer/data/transactions_500.json`**. Es un JSON UTF-8 con exactamente 500 objetos sintéticos de las tres fuentes, mezclados de forma reproducible. Se incluye también al instalar el paquete, y se localiza respecto al paquete para que la carga no dependa del directorio desde el cual se ejecute el comando.
@@ -65,8 +81,10 @@ Con UTC, el archivo inicial produce 102 `SUCCESS`, 99 `FAILED` y 99 `PENDING`; l
 
 ## Uso
 
-1. Espere a que termine la carga automática y revise las métricas del lote completo.
-2. Explore **Válidas**, **Inválidas** e **Incompletas**, que muestran su cantidad de registros. Ordene las columnas y combine fuente y búsqueda por identificador; estado y moneda se aplican solo a las válidas.
+1. Espere a que termine la carga automática. El resumen principal muestra las métricas de la **vista filtrada**; debajo se conserva un resumen del **lote completo**.
+2. Explore **Válidas**, **Inválidas** e **Incompletas**, que actualizan su cantidad de registros con cada filtro. Ordene las columnas y combine fuente, moneda, estado y búsqueda por identificador en las tres categorías.
+Las monedas disponibles se ajustan a la fuente seleccionada. Si la moneda elegida deja de estar disponible, se vuelve a **Todas las monedas**. En inválidas e incompletas se filtra por la moneda o estado reconocible del original, sin considerar válida la transacción ni sumar su monto. **Sin moneda** permite encontrar registros cuya moneda falta o no se reconoce. Los conteos de pestañas, resumen, estados y sumas se actualizan con los filtros; **Limpiar filtros** restaura el lote completo.
+
 3. Seleccione una fila para comparar los originales con el resultado y revisar la categoría, errores y advertencias.
 4. Use **Exportar válidas…**, **Exportar inválidas…** o **Exportar incompletas…**, eligiendo **Lote completo** o **Vista filtrada**. Cada botón exporta su propia categoría y utiliza sus filtros, aunque esa pestaña no esté activa.
 5. Para procesar otro archivo, seleccione la zona de origen y pulse **Abrir JSON…** o use el atajo estándar de apertura. Para volver a cargar el inicial con otra zona, seleccione `src/transaction_normalizer/data/transactions_500.json` desde ese diálogo.

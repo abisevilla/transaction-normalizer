@@ -8,8 +8,8 @@ Fecha: 13 de noviembre de 2026.
 - PySide6 6.12.0, simplejson 3.20.2 y pytest 9.2.0.
 - Instalación editable del paquete completada con sus dependencias de desarrollo.
 - Comando: `.venv/bin/python -m pytest -q`.
-- Resultado: **49 pruebas aprobadas en 1,83 segundos**, sin advertencias de deprecación y con código de salida 0.
-- La suite contiene 43 pruebas de dominio sin sesión gráfica y 6 pruebas de interfaz Qt.
+- Resultado: **50 pruebas aprobadas en 2,13 segundos**, sin advertencias de deprecación y con código de salida 0.
+- La suite contiene 43 pruebas de dominio sin sesión gráfica y 7 pruebas de interfaz Qt.
 - Medición adicional: 12 000 registros sintéticos válidos normalizados en **0,083 segundos**. Corresponde solo al motor, con datos ya en memoria; no incluye lectura, dibujo de tablas ni exportación. No constituye una garantía para otros equipos o archivos.
 
 ## Cobertura verificada
@@ -22,7 +22,7 @@ Fecha: 13 de noviembre de 2026.
 - Lectura JSON, raíz inválida, archivo inexistente y exportación exacta sin montos textuales.
 - Reporte de inválidas, selección de registros exportados y preservación del destino ante fallo de reemplazo.
 - Ordenación numérica y selección después de filtrar en modelos Qt.
-- Filtros, comparación de detalles y métricas del lote que permanecen estables al filtrar.
+- Filtros combinados, comparación de detalles y actualización de métricas y conteos de pestañas según la vista filtrada; resumen del lote completo separado.
 - Trabajador Qt con 12 000 registros, atención de eventos durante el proceso, cierre con trabajo activo y conservación del lote anterior tras una importación fallida.
 - Exportación desde la ventana con alcance filtrado y aceptación/rechazo de sobrescritura, usando respuestas simuladas de los diálogos.
 
@@ -51,3 +51,11 @@ Al ejecutar la primera suite se detectó un fallo de liberación de objetos Qt a
 - Probadas exportaciones separadas de las tres categorías y carga automática al iniciar desde otro directorio.
 - Revisada captura offscreen de la nueva pestaña Incompletas y de los controles de exportación.
 - Construidos sdist y wheel en `/tmp/transaction-normalizer-dist`; ambos incluyen el archivo de 500 transacciones. La revisión nativa pendiente indicada anteriormente se mantiene.
+
+## Corrección de filtros y conteos
+
+- Verificado fuente `source_a` + moneda USD: 50 válidas, 17 inválidas y 13 incompletas (80 registros filtrados).
+- Verificado fuente `source_a` + Sin moneda: 6 incompletas y cero registros en las otras categorías.
+- Verificado fuente `source_c` + EUR: 100 válidas, 33 inválidas y 25 incompletas.
+- Probados el resultado vacío, la restauración de las 500 transacciones al limpiar filtros y el reinicio de moneda al elegir una fuente incompatible.
+- Revisada captura offscreen de la pestaña Incompletas con fuente y moneda combinadas; sus conteos coinciden con el resumen filtrado.

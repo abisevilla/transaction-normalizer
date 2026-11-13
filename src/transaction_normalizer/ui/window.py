@@ -7,8 +7,8 @@ from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QLineEdit, QComboBox, QTabWidget, QTableView, QSplitter,
     QPlainTextEdit, QFileDialog, QMessageBox, QProgressBar, QAbstractItemView, QInputDialog)
-from ..services import load, export, Cancelled, safe_original
-from .models import TransactionModel, TransactionProxy
+from ..services import load, export, Cancelled, safe_original, metrics_for
+from .models import TransactionModel, TransactionProxy, available_fields
 from .theme import STYLE
 
 
@@ -75,6 +75,9 @@ class MainWindow(QMainWindow):
         self.metrics_label = QLabel("Sin lote cargado", objectName="metrics")
         self.metrics_label.setWordWrap(True)
         layout.addWidget(self.metrics_label)
+        self.batch_label = QLabel("", objectName="batch_summary")
+        self.batch_label.setWordWrap(True)
+        layout.addWidget(self.batch_label)
         self.success_label = QLabel("", objectName="success")
         layout.addWidget(self.success_label)
         filters = QHBoxLayout()
@@ -217,11 +220,7 @@ class MainWindow(QMainWindow):
             self.tabs.setTabText(i, f"{title} ({len(self.models[i].records)})")
         self.file_label.setText(f"Archivo: {Path(path).name} · Zona asumida: {zone}")
         m = batch.metrics
-        self.success_label.setText(f"{m.valid} transacciones válidas")
-        totals = " · ".join(f"{code} {value:,.2f}" for code, value in sorted(m.currencies.items())) or "Sin montos válidos"
-        self.metrics_label.setText(f"LOTE COMPLETO   Procesadas: {m.processed}   |   Válidas: {m.valid}   |   Inválidas: {m.invalid_only}   |   Incompletas: {m.incomplete}\n"
-                                   f"SUCCESS: {m.statuses['SUCCESS']}   FAILED: {m.statuses['FAILED']}   PENDING: {m.statuses['PENDING']}\n"
-                                   f"Totales de todas las válidas (todos los estados): {totals}")
+        self.batch_label.setText(f"Lote completo: {m.processed} registros · Válidas: {m.valid} · Inválidas: {m.invalid_only} · Incompletas: {m.incomplete}")
         self.clear_filters()
         self.original.clear()
         self.normalized.clear()
@@ -229,16 +228,41 @@ class MainWindow(QMainWindow):
             table.resizeColumnsToContents()
 
     def apply_filters(self, *_):
-        invalid = self.tabs.currentIndex() != 0
-        self.state.setEnabled(not invalid)
-        self.currency.setEnabled(not invalid)
-        for index, proxy in enumerate(self.proxies):
-            proxy.source_filter = self.source.currentText() if self.source.currentIndex() else ""
-            proxy.status_filter = self.state.currentText() if index == 0 and self.state.currentIndex() else ""
-            proxy.currency_filter = self.currency.currentText() if index == 0 and self.currency.currentIndex() else ""
+        if self.batch is None:
+            return
+        source = self.source.currentText() if self.source.currentIndex() else ""
+        # Las monedas disponibles dependen de la fuente, también en los rechazos.
+        available = set()
+        for record in self.batch.records:
+            if not source or (record.source or "Desconocida") == source:
+                available.add(available_fields(record)[0] or "Sin moneda")
+        options = ["Todas las monedas"] + sorted(available)
+        selected = self.currency.currentText()
+        if options != [self.currency.itemText(i) for i in range(self.currency.count())]:
+            self.currency.blockSignals(True)
+            self.currency.clear()
+            self.currency.addItems(options)
+            self.currency.setCurrentText(selected if selected in options else "Todas las monedas")
+            self.currency.blockSignals(False)
+        for proxy in self.proxies:
+            proxy.source_filter = source
+            proxy.status_filter = self.state.currentText() if self.state.currentIndex() else ""
+            proxy.currency_filter = self.currency.currentText() if self.currency.currentIndex() else ""
             proxy.search = self.search.text().strip()
             proxy.refresh()
-        self.view_label.setText(f"Vista filtrada: {self.proxies[self.tabs.currentIndex()].rowCount()} registros · Las métricas superiores corresponden al lote completo.")
+        visible = []
+        for i, title in enumerate(("Válidas", "Inválidas", "Incompletas")):
+            proxy = self.proxies[i]
+            self.tabs.setTabText(i, f"{title} ({proxy.rowCount()})")
+            visible.extend(self.models[i].records[proxy.mapToSource(proxy.index(row, 0)).row()]
+                           for row in range(proxy.rowCount()))
+        m = metrics_for(visible)
+        totals = " · ".join(f"{code} {value:,.2f}" for code, value in sorted(m.currencies.items())) or "Sin montos válidos"
+        self.metrics_label.setText(f"VISTA FILTRADA   Registros: {m.processed}   |   Válidas: {m.valid}   |   Inválidas: {m.invalid_only}   |   Incompletas: {m.incomplete}\n"
+                                   f"SUCCESS: {m.statuses['SUCCESS']}   FAILED: {m.statuses['FAILED']}   PENDING: {m.statuses['PENDING']}\n"
+                                   f"Totales de válidas filtradas: {totals}")
+        self.success_label.setText(f"{m.valid} transacciones válidas en la vista filtrada")
+        self.view_label.setText(f"Pestaña actual: {self.proxies[self.tabs.currentIndex()].rowCount()} registros · Los conteos y montos superiores reflejan los filtros activos.")
         self.show_detail()
 
     def clear_filters(self):

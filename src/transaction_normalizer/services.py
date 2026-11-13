@@ -28,7 +28,6 @@ def process(data: list, zone: str = "UTC", progress: Callable = lambda *_: None,
         raise ImportFailure("La raíz del JSON debe ser una lista.")
     records = []
     duplicates = defaultdict(list)
-    metrics = Metrics(processed=len(data))
     step = max(1, len(data) // 100)
     for index, original in enumerate(data):
         if cancelled():
@@ -46,17 +45,7 @@ def process(data: list, zone: str = "UTC", progress: Callable = lambda *_: None,
                 matches[0].normalize(record, zone)
         if record.normalized:
             tx = record.normalized
-            metrics.valid += 1
-            metrics.statuses[tx.status.value] += 1
-            with localcontext() as ctx:
-                previous = metrics.currencies.get(tx.currency, Decimal(0))
-                ctx.prec = max(28, len(previous.as_tuple().digits), len(tx.amount.as_tuple().digits)) + 2
-                metrics.currencies[tx.currency] = previous + tx.amount
             duplicates[(tx.source, tx.id)].append(record)
-        else:
-            metrics.invalid += 1
-            if record.category == "INCOMPLETE":
-                metrics.incomplete += 1
         records.append(record)
         if (index + 1) % step == 0 or index + 1 == len(data):
             progress(index + 1, len(data))
@@ -64,7 +53,26 @@ def process(data: list, zone: str = "UTC", progress: Callable = lambda *_: None,
         if len(group) > 1:
             for record in group:
                 record.warnings.append(Issue("DUPLICATE_ID", "id", "Identificador repetido en la misma fuente; se conservó el registro."))
-    return Batch(records, metrics)
+    return Batch(records, metrics_for(records))
+
+
+def metrics_for(records: Iterable[Record]) -> Metrics:
+    """Resume un lote o una selección sin volver a normalizar sus registros."""
+    metrics = Metrics()
+    for record in records:
+        metrics.processed += 1
+        tx = record.normalized
+        if tx is None:
+            metrics.invalid += 1
+            metrics.incomplete += record.category == "INCOMPLETE"
+            continue
+        metrics.valid += 1
+        metrics.statuses[tx.status.value] += 1
+        with localcontext() as ctx:
+            previous = metrics.currencies.get(tx.currency, Decimal(0))
+            ctx.prec = max(28, len(previous.as_tuple().digits), len(tx.amount.as_tuple().digits)) + 2
+            metrics.currencies[tx.currency] = previous + tx.amount
+    return metrics
 
 
 def load(path: str | Path, zone="UTC", progress=lambda *_: None, cancelled=lambda: False) -> Batch:

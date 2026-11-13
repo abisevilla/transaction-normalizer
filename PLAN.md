@@ -2,7 +2,7 @@
 
 Implementar la aplicación de escritorio definida en `AGENTS.md`. Este documento organiza el trabajo; las reglas funcionales y los contratos de datos se mantienen en `AGENTS.md`.
 
-Estado: implementación completada y suite automatizada aprobada (49 pruebas). Se revisaron capturas de la interfaz en modo offscreen. La comprobación manual de diálogos nativos y navegación con teclado en una sesión gráfica sigue pendiente; consulte `VALIDATION.md`.
+Estado: implementación completada y suite automatizada aprobada (50 pruebas). Se revisaron capturas de la interfaz en modo offscreen. La comprobación manual de diálogos nativos y navegación con teclado en una sesión gráfica sigue pendiente; consulte `VALIDATION.md`.
 
 ## 1. Preparar el proyecto
 
@@ -69,7 +69,7 @@ Estado: implementación completada y suite automatizada aprobada (49 pruebas). S
 - [x] Agregar estados vacíos, mensajes de error, controles accesibles por teclado y foco visible. Los estados deben incluir texto además del color.
 - [x] Presentar diálogos de exportación con alcance explícito y confirmación antes de sobrescribir.
 
-**Verificación:** importar los ejemplos y revisar búsqueda, filtros combinados, ordenación, selección y comparación de datos. Los importes se ordenan por su valor, no por su texto. Las métricas del lote no cambian al filtrar.
+**Verificación:** importar los ejemplos y revisar búsqueda, filtros combinados, ordenación, selección y comparación de datos. Los importes se ordenan por su valor, no por su texto. Las métricas principales y los conteos de pestañas se actualizan al filtrar, mientras el resumen del lote permanece separado.
 
 ## 7. Integrar trabajo en segundo plano
 
@@ -107,3 +107,11 @@ El primer hito funcional comprende las etapas 1 a 5: normalización y exportaci�
 - [x] Agregar pestaña, conteo y exportación propios para las incompletas, con categorías excluyentes en pantalla.
 - [x] Documentar instrucciones secuenciales de instalación, ejecución y uso del lote inicial en el README.
 - [x] Verificar las cantidades, métricas, reportes, carga automática y contenido del paquete construido.
+
+## Corrección: filtros combinados y métricas visibles
+
+- [x] Actualizar conteos de válidas, inválidas e incompletas y métricas del resumen con los filtros activos.
+- [x] Conservar un resumen del lote completo separado y etiquetar ambos alcances.
+- [x] Permitir filtrar las tres categorías por fuente, moneda y estados reconocibles del original.
+- [x] Ajustar opciones de moneda a la fuente y ofrecer Sin moneda para datos no reconocibles.
+- [x] Probar combinaciones de fuente y moneda, resultados vacíos y restauración al limpiar filtros.
