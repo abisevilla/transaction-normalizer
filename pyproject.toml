@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transaction-normalizer"
+version = "0.1.0"
+description = "Explorador de transacciones multifuente"
+requires-python = ">=3.11,<3.15"
+dependencies = ["PySide6>=6.7,<7", "simplejson>=3.19,<4"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+
+[project.gui-scripts]
+transaction-normalizer = "transaction_normalizer.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.setuptools.package-data]
+transaction_normalizer = ["data/*.json"]

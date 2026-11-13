@@ -1,0 +1,9 @@
+[
+  {"id":"ok","amount":"10.00","currency":"USD","timestamp":"2025-03-10 14:22:00","status":"completed"},
+  {"id":"ok","amount":"10.00","currency":"USD","timestamp":"2025-03-10 14:22:00","status":"completed"},
+  {"id":"incompleta"},
+  {"ref":"bad","amount":"$99,99","date":"2025-02-30T14:22:00Z","result":"unknown"},
+  {"id":"ambigua","transaction_id":1},
+  {"otro":"desconocido"},
+  42
+]
